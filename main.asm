@@ -13,11 +13,11 @@
 .def overflows = r17
 
 .org 0x0000              ; memory (PC) location of reset handler
-rjmp Reset
+rjmp reset
 .org 0x0020              ; memory location of Timer0 overflow handler
 rjmp overflow_handler    ; go here if a timer0 overflow interrupt occurs 
 
-Reset: 
+reset: 
    ldi temp,  0b00000011 ; 011 - FCPU/64
    out TCCR0B, temp      ; set the clock selector bits CA02, CA01, CA00 to 011
                          ; this puts Timer Counter0, TCNT0 in to FCPU/64 mode
@@ -26,26 +26,26 @@ Reset:
    sts TIMSK0, temp      ; set the Timer Overflow Interrupt Enable (TOIE0) bit 
                          ; of the Timer Interrupt Mask Register (TIMSK0)
 
-   sei                   ; enable global interrupts -- equivalent to "sbi SREG, I"
+   sei                   ; enable global interrupts
 
    clr temp
    out TCNT0, temp       ; initialize the Timer/Counter to 0
 
    sbi DDRD, 4           ; set PD4 to output
 
-blink:
-   sbi PORTD, 4          ; turn on LED on PD4
-   rcall delay           ; delay will be 1/2 second
-   cbi PORTD, 4          ; turn off LED on PD4
-   rcall delay           ; delay will be 1/2 second
-   rjmp blink            ; loop back to the start
+start:
+   sbi PORTD, 4          ; turn on PD4
+   rcall delay           ; delay 1/2 second
+   cbi PORTD, 4          ; turn off PD4
+   rcall delay           ; delay 1/2 second
+   rjmp start       ; loop back to the start
   
 delay:
    clr overflows         ; set overflows to 0 
    sec_count:
      cpi overflows, 31   ; compare number of overflows and 31
    brne sec_count        ; branch to back to sec_count if not equal 
-   ret                   ; if 31 overflows have occured return to blink
+   ret                   ; if 31 overflows have occured return to squareWave
 
 overflow_handler: 
    inc overflows         ; add 1 to the overflows variable
